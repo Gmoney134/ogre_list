@@ -1,6 +1,7 @@
-// src/routes/index.ts
 import express from 'express';
-import authRoutes from './auth.js'; //added .js
+import authRouter from './auth.js';
+import profileRouter from './profile.js';
 const router = express.Router();
-router.use('/auth', authRoutes);
+router.use('/auth', authRouter);
+router.use('/profile', profileRouter);
 export default router;

@@ -1,2 +1,1 @@
-// src/middleware/index.ts
-export { default as authenticateToken } from './authMiddleware';
+export { default as verifyToken } from './authMiddleware.js';

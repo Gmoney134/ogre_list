@@ -7,20 +7,42 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import pool from '../config/database.js'; //added .js
+import db from '../config/database.js';
+import bcrypt from 'bcrypt';
 class User {
+    constructor(id, username, password, email) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.email = email; //add email
+    }
     static createTable() {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield pool.connect();
+            const client = yield db.connect();
             try {
-                const query = `
+                yield client.query(`
                 CREATE TABLE IF NOT EXISTS users (
                                                      id SERIAL PRIMARY KEY,
-                                                     username VARCHAR(255) UNIQUE NOT NULL,
-                    password VARCHAR(255) NOT NULL
-                    );
-            `;
-                yield client.query(query);
+                                                     username TEXT UNIQUE NOT NULL,
+                                                     password TEXT NOT NULL,
+                                                     email TEXT UNIQUE
+                )
+            `); //add email column
+            }
+            finally {
+                client.release();
+            }
+        });
+    }
+    static createUser(username, password, email) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield db.connect();
+            try {
+                const result = yield client.query('INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING id, username, email', //add email
+                [username, password, email] //add email
+                );
+                const { id, username: returnedUsername, email: returnedEmail } = result.rows[0]; //add email
+                return new User(id, returnedUsername, undefined, returnedEmail); //add email
             }
             finally {
                 client.release();
@@ -29,24 +51,68 @@ class User {
     }
     static findByUsername(username) {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield pool.connect();
+            const client = yield db.connect();
             try {
-                const query = 'SELECT * FROM users WHERE username = $1';
-                const result = yield client.query(query, [username]);
-                return result.rows.length > 0 ? result.rows[0] : null;
+                const result = yield client.query('SELECT * FROM users WHERE username = $1', [username]);
+                if (result.rows.length === 0) {
+                    return null;
+                }
+                const { id, username: returnedUsername, password, email } = result.rows[0]; //add email
+                return new User(id, returnedUsername, password, email); //add email
             }
             finally {
                 client.release();
             }
         });
     }
-    static createUser(username, password) {
+    static findById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const client = yield pool.connect();
+            const client = yield db.connect();
             try {
-                const query = 'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING *';
-                const result = yield client.query(query, [username, password]);
-                return result.rows[0];
+                const result = yield client.query('SELECT * FROM users WHERE id = $1', [id]);
+                if (result.rows.length === 0) {
+                    return null;
+                }
+                const { id: returnedId, username, password, email } = result.rows[0]; //add email
+                return new User(returnedId, username, password, email); //add email
+            }
+            finally {
+                client.release();
+            }
+        });
+    }
+    static updateUser(id, username, password, email) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const client = yield db.connect();
+            try {
+                let query = 'UPDATE users SET ';
+                const values = [];
+                let paramCount = 1;
+                if (username) {
+                    query += `username = $${paramCount}, `;
+                    values.push(username);
+                    paramCount++;
+                }
+                if (password) {
+                    const hashedPassword = yield bcrypt.hash(password, 10);
+                    query += `password = $${paramCount}, `;
+                    values.push(hashedPassword);
+                    paramCount++;
+                }
+                if (email) { //add email
+                    query += `email = $${paramCount}, `;
+                    values.push(email);
+                    paramCount++;
+                }
+                query = query.slice(0, -2); // Remove the trailing comma and space
+                query += ` WHERE id = $${paramCount} RETURNING *`;
+                values.push(id);
+                const result = yield client.query(query, values);
+                if (result.rows.length === 0) {
+                    return null;
+                }
+                const { id: returnedId, username: returnedUsername, password: returnedPassword, email: returnedEmail } = result.rows[0]; //add email
+                return new User(returnedId, returnedUsername, returnedPassword, returnedEmail); //add email
             }
             finally {
                 client.release();

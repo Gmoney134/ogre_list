@@ -5,16 +5,20 @@ import { Request, Response } from 'express'; // Import Request and Response from
 
 class AuthController {
     static async registerUser(req: Request, res: Response) { // Add types to req and res
-        const { username, password } = req.body;
+        const { username, password, email } = req.body; //add email
 
         try {
             const existingUser = await User.findByUsername(username);
             if (existingUser) {
                 return res.status(400).json({ message: 'Username already exists' });
             }
+            //add email
+            if (!email) {
+                return res.status(400).json({ message: 'Email required' });
+            }
 
             const hashedPassword = await bcrypt.hash(password, 10);
-            const newUser = await User.createUser(username, hashedPassword);
+            const newUser = await User.createUser(username, hashedPassword, email);//add email
 
             res.status(201).json({ message: 'User created successfully', user: newUser });
         } catch (error) {
@@ -32,12 +36,12 @@ class AuthController {
                 return res.status(400).json({ message: 'Invalid username or password' });
             }
 
-            const isPasswordValid = await bcrypt.compare(password, user.password);
+            const isPasswordValid = await bcrypt.compare(password, user.password as string);
             if (!isPasswordValid) {
                 return res.status(400).json({ message: 'Invalid username or password' });
             }
 
-            const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
+            const token = jwt.sign({ userId: user.id }, (process.env.JWT_SECRET || 'your_jwt_secret') as string, { expiresIn: '1h' });
 
             res.status(200).json({ message: 'Login successful', token });
         } catch (error) {

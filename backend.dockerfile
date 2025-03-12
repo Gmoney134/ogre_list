@@ -5,14 +5,15 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copy package.json to the working directory
-COPY ./app/backend/package.json ./
+COPY ./app/backend/package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --omit=dev
 
 # Copy the rest of the application code to the working directory
 COPY ./app/backend ./
 
+RUN npm install
 # Build the application
 RUN npm run build
 
@@ -20,4 +21,4 @@ RUN npm run build
 EXPOSE 5000
 
 # Start the application
-CMD ["node", "build/server.js"]
+CMD ["npm", "start"]

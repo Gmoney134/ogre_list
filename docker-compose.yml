@@ -5,12 +5,11 @@ services:
       dockerfile: backend.dockerfile
     ports:
       - "5000:5000"
-    # frontend:
-    #   build:
-    #     context: .
-    #     dockerfile: frontend.dockerfile
-    #   ports:
-    #     - "3000:3000"
-    #   depends_on:
-    #     - backend
-    command: npm run dev
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend

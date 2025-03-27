@@ -5,13 +5,13 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copy package.json to the working directory
-COPY ./app/frontend/package*.json ./
+COPY ./package*.json ./
 
 # Install dependencies
 RUN npm install --omit=dev
 
 # Copy the rest of the application code to the working directory
-COPY ./app/frontend ./
+COPY ./app ./
 
 RUN npm install
 # Build the application

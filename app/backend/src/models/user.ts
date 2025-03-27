@@ -18,10 +18,10 @@ class User {
         try {
             await client.query(`
                 CREATE TABLE IF NOT EXISTS users (
-                                                     id SERIAL PRIMARY KEY,
-                                                     username TEXT UNIQUE NOT NULL,
-                                                     password TEXT NOT NULL,
-                                                     email TEXT UNIQUE
+                    id SERIAL PRIMARY KEY,
+                    username TEXT UNIQUE NOT NULL,
+                    password TEXT NOT NULL,
+                    email TEXT UNIQUE
                 )
             `);//add email column
         } finally {

@@ -37,7 +37,8 @@ class Worker {
                     ...farmOptions.forkOptions,
                     env: {
                         ...((_farmOptions_forkOptions = farmOptions.forkOptions) == null ? void 0 : _farmOptions_forkOptions.env) || {},
-                        ...process.env
+                        ...process.env,
+                        IS_NEXT_WORKER: 'true'
                     }
                 },
                 maxRetries: 0
@@ -59,7 +60,7 @@ class Worker {
                     _worker__child1;
                     (_worker__child = worker._child) == null ? void 0 : _worker__child.on('exit', (code, signal)=>{
                         if ((code || signal && signal !== 'SIGINT') && this._worker) {
-                            logger.error(`Static worker exited with code: ${code} and signal: ${signal}`);
+                            logger.error(`Next.js build worker exited with code: ${code} and signal: ${signal}`);
                             // if a child process doesn't exit gracefully, we want to bubble up the exit code to the parent process
                             process.exit(code ?? 1);
                         }
@@ -134,7 +135,11 @@ class Worker {
     end() {
         const worker = this._worker;
         if (!worker) {
-            throw new Error('Farm is ended, no more calls can be done to it');
+            throw Object.defineProperty(new Error('Farm is ended, no more calls can be done to it'), "__NEXT_ERROR_CODE", {
+                value: "E265",
+                enumerable: false,
+                configurable: true
+            });
         }
         cleanupWorkers(worker);
         this._worker = undefined;

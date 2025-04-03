@@ -17,7 +17,7 @@ class DashboardController {
             const houses = await House.findByUserId(userId);
 
             if (!houses || houses.length === 0) {
-                return res.json([]); // Return empty array if no houses are found
+                return res.json({ houses: [], message: "No houses found for this user." }); // Return empty array if no houses are found
             }
 
             // Fetch all data for each house
@@ -34,7 +34,7 @@ class DashboardController {
                 return { ...house, rooms: roomsWithAppliancesAndParts };
             }));
 
-            res.json(dashboardData);
+            res.json({ houses: dashboardData });
         } catch (error) {
             console.error('Error getting dashboard data:', error);
             res.status(500).json({ message: 'Internal server error' });

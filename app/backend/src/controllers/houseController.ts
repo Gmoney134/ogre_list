@@ -12,28 +12,14 @@ class HouseController {
             if (!userId) {
                 return res.status(401).json({ message: 'Unauthorized' });
             }
-            const { name } = req.body;
+            const { name, yearBuilt, address, reminderDate, websiteLink } = req.body;
             if (!name) {
                 return res.status(400).json({ message: 'Name is required' });
             }
-            const house = await House.createHouse(name, userId);
+            const house = await House.createHouse(name, userId, yearBuilt, address, reminderDate, websiteLink);
             res.status(201).json(house);
         } catch (error) {
             console.error('Error creating house:', error);
-            res.status(500).json({ message: 'Internal server error' });
-        }
-    }
-
-    static async getHousesByUserId(req: CustomRequest, res: Response) {
-        try {
-            const userId = req.userId;
-            if (!userId) {
-                return res.status(401).json({ message: 'Unauthorized' });
-            }
-            const houses = await House.findByUserId(userId);
-            res.json(houses);
-        } catch (error) {
-            console.error('Error getting houses:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     }
@@ -42,7 +28,7 @@ class HouseController {
         try {
             const userId = req.userId;
             const { houseId } = req.params;
-            const { name } = req.body;
+            const { name, yearBuilt, address, reminderDate, websiteLink } = req.body;
 
             if (!userId) {
                 return res.status(401).json({ message: 'Unauthorized' });
@@ -58,10 +44,24 @@ class HouseController {
                 return res.status(403).json({ message: 'Forbidden' });
             }
 
-            const updatedHouse = await House.updateHouse(parseInt(houseId), name);
+            const updatedHouse = await House.updateHouse(parseInt(houseId), name, yearBuilt, address, reminderDate, websiteLink);
             res.json(updatedHouse);
         } catch (error) {
             console.error('Error updating house:', error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    }
+
+    static async getHousesByUserId(req: CustomRequest, res: Response) {
+        try {
+            const userId = req.userId;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+            const houses = await House.findByUserId(userId);
+            res.json(houses);
+        } catch (error) {
+            console.error('Error getting houses by user ID:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     }

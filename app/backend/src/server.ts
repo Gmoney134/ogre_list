@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import router from './routes/index.js';//updated
-import User from './models/user.js';
+import router from './routes/index.js';
+import { User, House, Room, Appliance, Part } from './models/index.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -9,11 +9,15 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-app.use('/api', router);//updated
+app.use('/api', router);
 
 const startServer = async () => {
     try {
         await User.createTable();
+        await House.createTable();
+        await Room.createTable();
+        await Appliance.createTable();
+        await Part.createTable();
         app.listen(port, () => {
             console.log(`Server is running on port ${port}`);
         });

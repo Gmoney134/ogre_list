@@ -14,9 +14,9 @@ export default function Dashboard() {
     }, []);
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-green-100 dark:bg-gray-900">
             {/*Sidebar */}
-            <aside className="w-64 bg-green-900 text-white p-6">
+            <aside className="w-64 bg-green-900 dark: bg-gray-800 text-white p-6">
                 <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
                 <nav>
                     <ul className="space-y-4">

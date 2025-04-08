@@ -11,15 +11,20 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (email === "user@example.com" && password === "password") {
+    const savedEmail = sessionStorage.getItem("userEmail");
+    const savedPassword = sessionStorage.getItem("userPassword");
+
+    if (email === savedEmail && password === savedPassword) {
       sessionStorage.setItem("isLoggedIn", "true");
+      setError("");
       router.push("/dash");
     } else {
-      alert("Invalid email or password");
+      setError("Invalid email or password");
     }
   };
 

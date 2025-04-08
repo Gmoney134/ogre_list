@@ -7,13 +7,25 @@ export default function SignUp() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [error, setError] = useState("");
 
     const handleSignUp = (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!email || !password || !confirmPassword) {
+            setError("Please fill in all fields.");
+            return;
+        }
+
+        if (password != confirmPassword) {
+            setError("Passwords do not match");
+            return;
+        }
+
+        setError("");
         sessionStorage.setItem("userEmail", email);
         sessionStorage.setItem("userPassword", password);
-        alert("Account created successfully!");
 
         router.push("/");
     };
@@ -25,6 +37,13 @@ export default function SignUp() {
                     <h2 className="text-center text-4xl font-semibold mb-4">Ogre List</h2>
                 </div>
                 <h2 className="text-center text-xl font-semibold mb-4">Sign Up</h2>
+
+                {error && (
+                    <p className="text-red-600 text-sm font-medium mb-4 text-center">
+                        {error}
+                    </p>
+                )}
+
                 <form className="flex flex-col gap-4" onSubmit={handleSignUp}>
                     <input
                         type="email"
@@ -35,10 +54,18 @@ export default function SignUp() {
                         required
                     />
                     <input
-                        type="password"
+                        type="text"
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        className="p-2 border rounded-md bg-gray-100 dark:bg-gray-800 dark:text-white"
+                        required
+                    />
+                    <input
+                        type="text"
+                        placeholder="Confirm your password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                         className="p-2 border rounded-md bg-gray-100 dark:bg-gray-800 dark:text-white"
                         required
                     />

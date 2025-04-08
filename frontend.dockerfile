@@ -13,6 +13,9 @@ RUN npm install
 # Copy the rest of the frontend application code to the working directory
 COPY ./app/frontend .
 
+# Ensure Next.js binary is executable
+RUN chmod +x node_modules/.bin/next
+
 # Build the application
 RUN npm run build
 

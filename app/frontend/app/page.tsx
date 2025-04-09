@@ -2,29 +2,46 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai"
-
-//import loginUser from ""
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 
 export default function Login() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const savedEmail = sessionStorage.getItem("userEmail");
-    const savedPassword = sessionStorage.getItem("userPassword");
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (email === savedEmail && password === savedPassword) {
-      sessionStorage.setItem("isLoggedIn", "true");
+      if (!response.ok) {
+        throw new Error("Invalid username or password");
+      }
+
+      const data = await response.json();
+      const { token } = data;
+
+      // Store the token in sessionStorage
+      sessionStorage.setItem("authToken", token);
+
+      // Redirect to the dashboard
       setError("");
       router.push("/dash");
-    } else {
-      setError("Invalid email or password");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     }
   };
 
@@ -37,17 +54,17 @@ export default function Login() {
         <h2 className="text-center text-xl font-semibold mb-4">Login</h2>
         <form className="flex flex-col gap-4" onSubmit={handleLogin}>
           <input
-            type="email"
-            placeholder="example@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="p-2 border rounded-md bg-gray-100 dark:bg-gray-800 dark:text-white"
             required
           />
           <div className="relative w-full">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="password"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="p-2 border rounded-md bg-gray-100 dark:bg-gray-800 dark:text-white"
@@ -68,6 +85,7 @@ export default function Login() {
             Login
           </button>
         </form>
+        {error && <p className="text-red-500 text-center mt-4">{error}</p>}
         <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
           Don't have an account?{" "}
           <a href="/signup" className="text-blue-600 hover:underline">
@@ -76,5 +94,5 @@ export default function Login() {
         </p>
       </div>
     </div>
-  )
+  );
 }

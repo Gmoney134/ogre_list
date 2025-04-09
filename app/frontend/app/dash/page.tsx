@@ -2,40 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { FaHome, FaCouch, FaTools, FaSignOutAlt, FaCog } from "react-icons/fa";
+import { MdExpandMore, MdExpandLess } from "react-icons/md";
 
 interface Part {
   id?: number;
   name?: string;
-  model?: string;
-  brand?: string;
-  purchaseDate?: Date;
-  reminderDate?: Date | null;
-  websiteLink?: string | null;
 }
 
 interface Appliance {
   id?: number;
   name?: string;
-  roomId?: number;
-  model?: string;
-  brand?: string;
-  purchaseDate?: Date;
-  reminderDate?: Date | null;
-  websiteLink?: string | null;
   parts: Part[];
 }
 
 interface Room {
   id?: number;
   name?: string;
-  houseId?: number;
   appliances: Appliance[];
 }
 
 interface House {
   id?: number;
   name?: string;
-  userId?: number;
   rooms: Room[];
 }
 
@@ -43,6 +33,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [houses, setHouses] = useState<House[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedHouses, setExpandedHouses] = useState<number[]>([]);
 
   useEffect(() => {
     const token = sessionStorage.getItem("authToken");
@@ -54,18 +45,11 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         const response = await fetch("http://localhost:5000/api/dashboard", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data");
-        }
-
         const data = await response.json();
-        setHouses(data.houses || []); // Ensure houses is always an array
+        setHouses(data.houses || []);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -76,43 +60,55 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  const handleHouseClick = (id: number | undefined): void => {
-    if (id) {
-      router.push(`/houses/${id}`);
-    }
+  const toggleExpandHouse = (id?: number) => {
+    if (!id) return;
+    setExpandedHouses((prev) =>
+      prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id]
+    );
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("authToken");
+    router.push("/");
   };
 
   return (
-    <div className="flex h-screen bg-green-100 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-green-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-green-900 dark:bg-gray-800 text-white p-6">
         <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
         <nav>
           <ul className="space-y-4">
             <li>
-              <a href="#" className="block py-2 px-4 hover:bg-green-700 rounded">
-                Home
-              </a>
+              <Link
+                href="/dash"
+                className="flex items-center gap-2 py-2 px-4 hover:bg-green-700 rounded"
+              >
+                <FaHome /> Home
+              </Link>
             </li>
             <li>
-              <a href="#" className="block py-2 px-4 hover:bg-green-700 rounded">
-                Projects
-              </a>
+              <Link
+                href="/projects"
+                className="flex items-center gap-2 py-2 px-4 hover:bg-green-700 rounded"
+              >
+                <FaTools /> Projects
+              </Link>
             </li>
             <li>
-              <a href="#" className="block py-2 px-4 hover:bg-green-700 rounded">
-                Settings
-              </a>
+              <Link
+                href="/settings"
+                className="flex items-center gap-2 py-2 px-4 hover:bg-green-700 rounded"
+              >
+                <FaCog /> Settings
+              </Link>
             </li>
             <li>
               <button
-                onClick={() => {
-                  sessionStorage.removeItem("authToken");
-                  router.push("/");
-                }}
-                className="block w-full text-left py-2 px-4 hover:bg-red-700 rounded"
+                onClick={handleLogout}
+                className="flex items-center gap-2 w-full text-left py-2 px-4 hover:bg-red-700 rounded"
               >
-                Logout
+                <FaSignOutAlt /> Logout
               </button>
             </li>
           </ul>
@@ -120,48 +116,61 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 p-6">
-        <header className="flex justify-between items-center bg-white p-4 rounded shadow mb-6">
-          <h1 className="text-2xl font-bold">Welcome to Your Dashboard</h1>
+      <main className="flex-1 p-6">
+        <header className="bg-white dark:bg-gray-800 rounded shadow p-4 mb-6">
+          <h1 className="text-3xl font-bold">Welcome to Your Dashboard</h1>
         </header>
-        <h2 className="text-xl font-bold mb-4">Houses</h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <ul className="space-y-4">
-            {houses.map((house) => (
-              <li
-                key={house.id}
-                className="p-4 bg-white dark:bg-gray-800 rounded shadow cursor-pointer hover:bg-green-200 dark:hover:bg-gray-700"
-                onClick={() => handleHouseClick(house.id)}
-              >
-                <h3 className="text-lg font-bold">{house.name}</h3>
-                <ul className="ml-4 mt-2">
-                  {house.rooms.map((room) => (
-                    <li key={room.id} className="mt-2">
-                      <h4 className="font-semibold">Room: {room.name}</h4>
-                      <ul className="ml-4">
-                        {room.appliances.map((appliance) => (
-                          <li key={appliance.id} className="mt-1">
-                            <p>Appliance: {appliance.name}</p>
-                            <ul className="ml-4">
-                              {appliance.parts.map((part) => (
-                                <li key={part.id}>
-                                  <p>Part: {part.name}</p>
-                                </li>
-                              ))}
-                            </ul>
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+
+        <section>
+          <h2 className="text-xl font-semibold mb-4">Your Houses</h2>
+          {loading ? (
+            <p>Loading...</p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {houses.map((house) => (
+                <div
+                  key={house.id}
+                  className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:ring-2 hover:ring-green-400 cursor-pointer transition"
+                >
+                  <div
+                    className="flex justify-between items-center mb-2"
+                    onClick={() => toggleExpandHouse(house.id)}
+                  >
+                    <h3 className="text-lg font-bold">{house.name}</h3>
+                    {expandedHouses.includes(house.id!) ? (
+                      <MdExpandLess />
+                    ) : (
+                      <MdExpandMore />
+                    )}
+                  </div>
+
+                  {expandedHouses.includes(house.id!) && (
+                    <div className="ml-2 space-y-2">
+                      {house.rooms.map((room) => (
+                        <div key={room.id}>
+                          <p className="font-semibold">🛏 Room: {room.name}</p>
+                          <ul className="ml-4 list-disc">
+                            {room.appliances.map((appliance) => (
+                              <li key={appliance.id}>
+                                {appliance.name}
+                                <ul className="ml-4 list-square">
+                                  {appliance.parts.map((part) => (
+                                    <li key={part.id}>🔧 {part.name}</li>
+                                  ))}
+                                </ul>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }

@@ -9,40 +9,13 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Invalid username or password");
-      }
-
-      const data = await response.json();
-      const { token } = data;
-
-      // Store the token in sessionStorage
-      sessionStorage.setItem("authToken", token);
-
-      // Redirect to the dashboard
-      setError("");
-      router.push("/dash");
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
-    }
+    // ✅ Bypass authentication — go straight to dashboard
+    sessionStorage.setItem("authToken", "bypassed-token"); // fake token if needed
+    router.push("/dash");
   };
 
   return (
@@ -59,7 +32,6 @@ export default function Login() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="p-2 border rounded-md bg-gray-100 dark:bg-gray-800 dark:text-white"
-            required
           />
           <div className="relative w-full">
             <input
@@ -68,7 +40,6 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="p-2 border rounded-md bg-gray-100 dark:bg-gray-800 dark:text-white"
-              required
             />
             <button
               type="button"
@@ -85,7 +56,6 @@ export default function Login() {
             Login
           </button>
         </form>
-        {error && <p className="text-red-500 text-center mt-4">{error}</p>}
         <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
           Don't have an account?{" "}
           <a href="/signup" className="text-blue-600 hover:underline">

@@ -88,7 +88,7 @@ export default function SignUp() {
         </form>
         {error && <p className="text-red-500 text-center mt-4">{error}</p>}
         {success && <p className="text-green-500 text-center mt-4">{success}</p>}
-        <p className="text-center text-sm text-gray-700 dark:text-gray-400 mt-4">
+        <p className="text-center text-sm text-gray-800 dark:text-gray-400 mt-4">
           Already have an account?{" "}
           <a href="/" className="text-blue-600 hover:underline">
             Login

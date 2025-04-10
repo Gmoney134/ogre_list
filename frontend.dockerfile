@@ -1,6 +1,3 @@
-# Use an official Node.js runtime as a parent image
-FROM node:20-alpine
-# --- Base Stage ---
 # Use an appropriate Node.js base image
 FROM node:20-alpine AS base
 
@@ -63,7 +60,5 @@ EXPOSE 3000
 # RUN adduser --system --uid 1001 nextjs
 # USER nextjs
 
- # Start the application
-CMD ["npm", "start"]
 # Use the Node.js server created by the standalone output
 CMD ["node", "server.js"]

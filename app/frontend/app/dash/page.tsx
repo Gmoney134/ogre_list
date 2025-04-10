@@ -47,7 +47,7 @@ export default function Dashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/dashboard", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/dashboard`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -151,7 +151,7 @@ export default function Dashboard() {
         <section>
           <h2 className="text-xl font-semibold mb-4">Your Onions</h2>
           <button
-            onClick={() => router.push("/createHouse")}
+            onClick={() => router.push("/createOnion")}
             className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
           >
             Add Onion

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { FaHome, FaCouch, FaTools, FaSignOutAlt, FaCog } from "react-icons/fa";
 import { MdExpandMore, MdExpandLess } from "react-icons/md";
 
+import DarkModeToggle from "@/components/DarkModeToggle";
+
 interface Part {
   id?: number;
   name?: string;
@@ -34,7 +36,6 @@ export default function Dashboard() {
   const [houses, setHouses] = useState<House[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedHouses, setExpandedHouses] = useState<number[]>([]);
-  const [darkMode, setDarkMode] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
@@ -61,14 +62,6 @@ export default function Dashboard() {
 
     fetchDashboardData();
   }, []);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
 
   const toggleExpandHouse = (id?: number) => {
     if (!id) return;
@@ -119,17 +112,9 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="flex-1 p-6">
-        <header className="flex justify-between items-center bg-white dark:bg-gray-800 rounded shadow p-4 mb-6 dark:bg-gray-700 dark:text-white">
+        <header className="relative bg-white dark:bg-gray-800 rounded shadow p-4 mb-6 dark:bg-gray-700 dark:text-white flex items-center justify-between">
           <h1 className="text-3xl font-bold">Welcome to Your Dashboard</h1>
           <div className="flex items-center gap-4">
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="text-sm px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition"
-            >
-              {darkMode ? "Dark" : "Light"}
-            </button>
-
             {/* Profile Dropdown */}
             <div className="relative">
               <button
@@ -142,7 +127,6 @@ export default function Dashboard() {
                 <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded shadow z-10">
                   <ul className="text-sm text-gray-700 dark:text-gray-100">
                     <li className="hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 cursor-pointer">Profile</li>
-                    <li className="hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 cursor-pointer">Settings</li>
                     <li
                       onClick={() => {
                         sessionStorage.removeItem("authToken");
@@ -155,6 +139,11 @@ export default function Dashboard() {
                   </ul>
                 </div>
               )}
+            </div>
+
+            {/* Dark Mode Toggle */}
+            <div>
+              <DarkModeToggle />
             </div>
           </div>
         </header>

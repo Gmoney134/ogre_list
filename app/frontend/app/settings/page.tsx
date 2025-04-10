@@ -3,12 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import DarkModeToggle from "@/components/DarkModeToggle";
+
 export default function Settings() {
   const [emailNotifications, setEmailNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
 
   return (
     <div className="min-h-screen bg-green-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-8">
+      <div className="absolute top-4 right-4">
+        <DarkModeToggle />
+      </div>
       <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
         {/* Back to Dashboard */}
         <Link
@@ -29,17 +33,6 @@ export default function Settings() {
               className="w-5 h-5"
               checked={emailNotifications}
               onChange={() => setEmailNotifications(!emailNotifications)}
-            />
-          </div>
-
-          {/* Dark Mode */}
-          <div className="flex items-center justify-between">
-            <label className="text-lg font-medium">Dark Mode</label>
-            <input
-              type="checkbox"
-              className="w-5 h-5"
-              checked={darkMode}
-              onChange={() => setDarkMode(!darkMode)}
             />
           </div>
 

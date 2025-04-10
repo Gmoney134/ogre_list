@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import DarkModeToggle from "@/components/DarkModeToggle";
+
 export default function SignUp() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -43,11 +45,15 @@ export default function SignUp() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 sm:p-20 bg-green-900 dark:bg-gray-800">
+      <div className="absolute top-4 right-4">
+        <DarkModeToggle />
+      </div>
+      
       <div className="bg-green-100 dark:bg-gray-900 shadow-lg rounded-2x1 p-8 w-full max-w-sm">
         <div className="flex justify-center mb-6">
-          <h2 className="text-center text-4xl font-semibold mb-4">Ogre List</h2>
+          <h2 className="text-center text-4xl font-semibold mb-4 dark:text-white">Ogre List</h2>
         </div>
-        <h2 className="text-center text-xl font-semibold mb-4">Sign Up</h2>
+        <h2 className="text-center text-xl font-semibold mb-4 dark:text-white">Sign Up</h2>
         <form className="flex flex-col gap-4" onSubmit={handleSignUp}>
           <input
             type="text"

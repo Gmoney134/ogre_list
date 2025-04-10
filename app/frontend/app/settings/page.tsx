@@ -9,7 +9,7 @@ export default function Settings() {
   const [emailNotifications, setEmailNotifications] = useState(true);
 
   return (
-    <div className="min-h-screen bg-green-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-8">
+    <div className="min-h-screen bg-green-600 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-8">
       <div className="absolute top-4 right-4">
         <DarkModeToggle />
       </div>

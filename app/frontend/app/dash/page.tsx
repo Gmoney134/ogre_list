@@ -76,7 +76,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-green-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="flex min-h-screen bg-green-600 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-green-900 dark:bg-gray-800 text-white p-6">
         <h2 className="text-2xl font-bold mb-6">Dashboard</h2>

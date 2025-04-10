@@ -24,6 +24,8 @@ export default function CreateHouse() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
+    setSuccess(""); // Clear previous success messages
 
     const token = sessionStorage.getItem("authToken");
     if (!token) {
@@ -31,8 +33,21 @@ export default function CreateHouse() {
       return;
     }
 
+    // Read the API URL from the environment variable
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    console.log("Attempting to create house with API URL:", apiUrl); // Debugging
+
+    // Check if apiUrl is defined before using it
+    if (!apiUrl) {
+      console.error("API URL is not defined. Check build configuration.");
+      setError("Configuration error: Cannot connect to the server.");
+      return; // Stop execution if URL is missing
+    }
+
+
+
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/house`, {
+      const response = await fetch(`${apiUrl}/house`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

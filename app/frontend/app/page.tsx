@@ -15,34 +15,46 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     try {
+      // Use the variable you already defined and checked
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      console.log("Attempting login with API URL:", apiUrl);
-  
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+      console.log("Attempting login with API URL:", apiUrl); // Good for debugging
+
+      // Check if apiUrl is defined before using it
+      if (!apiUrl) {
+        // Log the error and inform the user
+        console.error("API URL is not defined. Check build configuration.");
+        setError("Configuration error: Cannot connect to the server.");
+        return; // Stop execution if URL is missing
+      }
+
+      // Use the apiUrl variable here
+      const response = await fetch(`${apiUrl}/auth/login`, { // <-- Use the variable
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
       });
-  
+
       console.log("Response status:", response.status);
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Backend error response:", errorText);
+        // Consider parsing errorText if it's JSON from the backend
         throw new Error(`Login failed: ${response.status} - ${errorText}`);
       }
-  
+
       const data = await response.json();
       const { token } = data;
-  
+
       sessionStorage.setItem("authToken", token);
       setError("");
       router.push("/dash");
     } catch (err) {
+      // Keep your existing error handling
       if (err instanceof Error) {
         console.error("Login error:", err);
         setError(err.message);
@@ -52,7 +64,8 @@ export default function Login() {
       }
     }
   };
-  
+
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 sm:p-20 bg-green-900 dark:bg-gray-800">

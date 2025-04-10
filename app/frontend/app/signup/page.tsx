@@ -15,9 +15,23 @@ export default function SignUp() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
+    setSuccess(""); // Clear previous success messages
+
+    // Read the API URL from the environment variable
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    console.log("Attempting sign up with API URL:", apiUrl); // Debugging
+
+    // Check if apiUrl is defined before using it
+    if (!apiUrl) {
+      console.error("API URL is not defined. Check build configuration.");
+      setError("Configuration error: Cannot connect to the server.");
+      return; // Stop execution if URL is missing
+    }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
+      // Use the apiUrl variable here
+      const response = await fetch(`${apiUrl}/auth/register`, { // <-- Use the variable
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,7 +62,7 @@ export default function SignUp() {
       <div className="absolute top-4 right-4">
         <DarkModeToggle />
       </div>
-      
+
       <div className="bg-green-600 dark:bg-gray-900 shadow-lg rounded-2x1 p-8 w-full max-w-sm">
         <div className="flex justify-center mb-6">
           <h2 className="text-center text-4xl font-semibold mb-4 dark:text-white">Ogre List</h2>

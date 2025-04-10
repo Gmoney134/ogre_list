@@ -150,6 +150,12 @@ export default function Dashboard() {
 
         <section>
           <h2 className="text-xl font-semibold mb-4">Your Houses</h2>
+          <button
+            onClick={() => router.push("/createHouse")}
+            className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
+          >
+            Add House
+          </button>
           {loading ? (
             <p>Loading...</p>
           ) : (

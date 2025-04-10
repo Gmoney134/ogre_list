@@ -32,7 +32,7 @@ export default function CreateHouse() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/house", {
+      const response = await fetch("http://3.15.239.173:5000/api/house", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

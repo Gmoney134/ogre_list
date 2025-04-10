@@ -17,7 +17,7 @@ export default function SignUp() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const response = await fetch("http://3.15.239.173:5000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

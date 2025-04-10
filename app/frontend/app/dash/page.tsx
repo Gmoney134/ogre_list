@@ -47,7 +47,7 @@ export default function Dashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        const response = await fetch("http://3.15.239.173:5000/api/dashboard", {
+        const response = await fetch("http://localhost:5000/api/dashboard", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

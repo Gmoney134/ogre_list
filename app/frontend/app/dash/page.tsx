@@ -34,6 +34,8 @@ export default function Dashboard() {
   const [houses, setHouses] = useState<House[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedHouses, setExpandedHouses] = useState<number[]>([]);
+  const [darkMode, setDarkMode] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     const token = sessionStorage.getItem("authToken");
@@ -59,6 +61,14 @@ export default function Dashboard() {
 
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
 
   const toggleExpandHouse = (id?: number) => {
     if (!id) return;
@@ -103,22 +113,50 @@ export default function Dashboard() {
                 <FaCog /> Settings
               </Link>
             </li>
-            <li>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 w-full text-left py-2 px-4 hover:bg-red-700 rounded"
-              >
-                <FaSignOutAlt /> Logout
-              </button>
-            </li>
           </ul>
         </nav>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 p-6">
-        <header className="bg-white dark:bg-gray-800 rounded shadow p-4 mb-6">
+        <header className="flex justify-between items-center bg-white dark:bg-gray-800 rounded shadow p-4 mb-6 dark:bg-gray-700 dark:text-white">
           <h1 className="text-3xl font-bold">Welcome to Your Dashboard</h1>
+          <div className="flex items-center gap-4">
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="text-sm px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+            >
+              {darkMode ? "Dark" : "Light"}
+            </button>
+
+            {/* Profile Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="bg-green-800 hover:bg-green-700 text-white px-4 py-2 rounded"
+              >
+                Profile
+              </button>
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded shadow z-10">
+                  <ul className="text-sm text-gray-700 dark:text-gray-100">
+                    <li className="hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 cursor-pointer">Profile</li>
+                    <li className="hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 cursor-pointer">Settings</li>
+                    <li
+                      onClick={() => {
+                        sessionStorage.removeItem("authToken");
+                        router.push("/");
+                      }}
+                      className="hover:bg-red-100 dark:hover:bg-red-700 px-4 py-2 text-red-600 dark:text-red-300 cursor-pointer"
+                    >
+                      Logout
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
         </header>
 
         <section>

@@ -74,7 +74,7 @@ class User {
         const client = await db.connect();
         try {
             let query = 'UPDATE users SET ';
-            const values: any[] = [];
+            const values: (string | number)[] = [];
             let paramCount = 1;
             if (username) {
                 query += `username = $${paramCount}, `;

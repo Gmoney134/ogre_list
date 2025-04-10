@@ -5,14 +5,14 @@ const transporter = nodemailer.createTransport({
     // Configure your email service here (e.g., Gmail, SendGrid)
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: "ogrelistproject@gmail.com",
+        pass: "tppczqfgvqofuglp",
     },
 });
 
 // Base email template
 const baseEmailTemplate = `
-  <html>
+  <html lang="en">
   <head>
     <title>Reminder</title>
   </head>
@@ -30,7 +30,7 @@ export async function sendReminderEmail(to: string, subject: string, reminderIte
     const emailText = baseEmailTemplate.replace('{{reminderItem}}', reminderItem);
 
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: "ogrelistproject@gmail.com",
         to,
         subject,
         html: emailText, // Use html instead of text

@@ -62,12 +62,12 @@ export default function CreateHouse() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 sm:p-20 bg-green-900 dark:bg-gray-800">
       <div className="bg-green-600 dark:bg-gray-900 shadow-lg rounded-2x1 p-8 w-full max-w-md">
-        <h2 className="text-center text-2xl font-semibold mb-6">Create a New House</h2>
+        <h2 className="text-center text-2xl font-semibold mb-6">Create a New Onion</h2>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
             type="text"
             name="name"
-            placeholder="House Name"
+            placeholder="Onion Name"
             value={houseData.name}
             onChange={handleInputChange}
             className="p-2 border rounded-md bg-gray-100 dark:bg-gray-800 dark:text-white"
@@ -76,7 +76,7 @@ export default function CreateHouse() {
           <input
             type="number"
             name="yearBuilt"
-            placeholder="Year Built"
+            placeholder="Year Established"
             value={houseData.yearBuilt}
             onChange={handleInputChange}
             className="p-2 border rounded-md bg-gray-100 dark:bg-gray-800 dark:text-white"

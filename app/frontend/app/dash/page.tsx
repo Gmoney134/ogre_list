@@ -113,7 +113,7 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="flex-1 p-6">
         <header className="relative bg-white dark:bg-gray-800 rounded shadow p-4 mb-6 dark:bg-gray-700 dark:text-white flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Welcome to Your Dashboard</h1>
+          <h1 className="text-3xl font-bold">Welcome to Your Swamp</h1>
           <div className="flex items-center gap-4">
             {/* Profile Dropdown */}
             <div className="relative">
@@ -149,12 +149,12 @@ export default function Dashboard() {
         </header>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4">Your Houses</h2>
+          <h2 className="text-xl font-semibold mb-4">Your Onions</h2>
           <button
             onClick={() => router.push("/createHouse")}
             className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
           >
-            Add House
+            Add Onion
           </button>
           {loading ? (
             <p>Loading...</p>

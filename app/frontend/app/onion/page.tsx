@@ -1,22 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FaHome, FaCouch, FaTools, FaSignOutAlt, FaCog } from "react-icons/fa";
+import { FaHome, FaTools, FaCog } from "react-icons/fa";
 import { MdExpandMore, MdExpandLess } from "react-icons/md";
 
-import DarkModeToggle from "@/components/DarkModeToggle";
-
-interface Part {
+interface House {
   id?: number;
   name?: string;
-}
-
-interface Appliance {
-  id?: number;
-  name?: string;
-  parts: Part[];
+  rooms: Room[];
 }
 
 interface Room {
@@ -25,67 +18,95 @@ interface Room {
   appliances: Appliance[];
 }
 
-interface House {
+interface Appliance {
   id?: number;
   name?: string;
-  rooms: Room[];
+  parts: Part[];
 }
 
-export default function Dashboard() {
+interface Part {
+  id?: number;
+  name?: string;
+}
+
+export default function HouseDetails() {
   const router = useRouter();
-  const [houses, setHouses] = useState<House[]>([]);
+  const [house, setHouse] = useState<House | null>(null);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedHouses, setExpandedHouses] = useState<number[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [expandedRooms, setExpandedRooms] = useState<number[]>([]);
 
   useEffect(() => {
+    // Safely access sessionStorage on the client side
+    const houseData = sessionStorage.getItem("house");
+    if (houseData) {
+      const parsedHouse = JSON.parse(houseData);
+      setHouse(parsedHouse);
+    } else {
+      router.push("/dash"); // Redirect to dashboard if no house data is found
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (!house || !house.id) return;
+
     const token = sessionStorage.getItem("authToken");
     if (!token) {
       router.push("/");
       return;
     }
 
-    const fetchDashboardData = async () => {
+    const fetchRoomData = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/dashboard", {
+        const response = await fetch(`http://localhost:5000/api/room/${house.id}`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data");
+          throw new Error("Failed to fetch house data");
         }
 
         const data = await response.json();
-        setHouses(data.houses || []);
+        setRooms(data || []);
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error("Error fetching house data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardData();
-  }, []);
+    fetchRoomData();
+  }, [house, router]);
 
-  const toggleExpandHouse = (id?: number) => {
+  const toggleExpandRoom = (id?: number) => {
     if (!id) return;
-    setExpandedHouses((prev) =>
+    setExpandedRooms((prev) =>
       prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id]
     );
   };
 
-  const handleHouseClick = (house: House): void => {
-    if (house) {
-      sessionStorage.setItem("house", JSON.stringify(house));
-      router.push(`/onion`);
+  const handleRoomClick = (room: Room): void => {
+    if (room) {
+      sessionStorage.setItem("room", JSON.stringify(room));
+      router.push(`/dash`);
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.clear();
-    router.push("/");
+  const handleCreateRoomClick = (): void => {
+    if (house && house.id) {
+      sessionStorage.setItem("houseID", house.id.toString());
+      router.push("/createRoom");
+    }
   };
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (!house) {
+    return <p>House not found. Redirecting...</p>;
+  }
 
   return (
     <div className="flex min-h-screen bg-green-600 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -125,45 +146,15 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="flex-1 p-6">
         <header className="relative bg-green-500 dark:bg-gray-800 rounded shadow p-4 mb-6 dark:bg-gray-700 dark:text-white flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Welcome to Your Swamp</h1>
-          <div className="flex items-center gap-4">
-            {/* Profile Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
-              >
-                Profile
-              </button>
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded shadow z-10">
-                  <ul className="text-sm text-gray-700 dark:text-gray-100">
-                    <li className="hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 cursor-pointer">Profile</li>
-                    <li
-                      onClick={handleLogout}
-                      className="hover:bg-red-100 dark:hover:bg-red-700 px-4 py-2 text-red-600 dark:text-red-300 cursor-pointer"
-                    >
-                      Logout
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Dark Mode Toggle */}
-            <div>
-              <DarkModeToggle />
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold">Onion Name: {house.name}</h1>
         </header>
-
         <section className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Your Onions</h2>
+          <h2 className="text-xl font-semibold">Rooms</h2>
           <button
-            onClick={() => router.push("/createOnion")}
+            onClick={handleCreateRoomClick}
             className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
           >
-            Add Onion
+            Add Room
           </button>
         </section>
 
@@ -172,29 +163,29 @@ export default function Dashboard() {
             <p>Loading...</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {houses.map((house) => (
+              {rooms.map((room) => (
                 <div
-                  key={house.id}
+                  key={room.id}
                   className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:ring-2 hover:ring-green-200 dark:hover:ring-green-400 cursor-pointer transition"
                 >
                   <div
                     className="flex justify-between items-center mb-2"
-                    onClick={() => toggleExpandHouse(house.id)}
-                    onDoubleClick={() => handleHouseClick(house)}
+                    onClick={() => toggleExpandRoom(room.id)}
+                    onDoubleClick={() => handleRoomClick(room)}
                   >
-                    <h3 className="text-lg font-bold">{house.name}</h3>
-                    {expandedHouses.includes(house.id!) ? (
+                    <h3 className="text-lg font-bold">{room.name}</h3>
+                    {expandedRooms.includes(room.id!) ? (
                       <MdExpandLess />
                     ) : (
                       <MdExpandMore />
                     )}
                   </div>
 
-                  {expandedHouses.includes(house.id!) && (
+                  {expandedRooms.includes(room.id!) && (
                     <div className="ml-2 space-y-2">
-                      {house.rooms.map((room) => (
-                        <div key={room.id}>
-                          <p className="font-semibold">🛏 Room: {room.name}</p>
+                      {(room.appliances || []).map((appliance) => (
+                        <div key={appliance.id}>
+                          <p className="font-semibold">🛏 Appliance: {appliance.name}</p>
                         </div>
                       ))}
                     </div>

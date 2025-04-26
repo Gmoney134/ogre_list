@@ -15,37 +15,44 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      console.log("Attempting login with API URL:", apiUrl);
+  
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
       });
-
+  
+      console.log("Response status:", response.status);
+  
       if (!response.ok) {
-        throw new Error("Invalid username or password");
+        const errorText = await response.text();
+        console.error("Backend error response:", errorText);
+        throw new Error(`Login failed: ${response.status} - ${errorText}`);
       }
-
+  
       const data = await response.json();
       const { token } = data;
-
-      // Store the token in sessionStorage
+  
       sessionStorage.setItem("authToken", token);
-
-      // Redirect to the dashboard
       setError("");
       router.push("/dash");
     } catch (err) {
       if (err instanceof Error) {
+        console.error("Login error:", err);
         setError(err.message);
       } else {
+        console.error("Unknown error:", err);
         setError("An unknown error occurred");
       }
     }
   };
+  
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 sm:p-20 bg-green-900 dark:bg-gray-800">

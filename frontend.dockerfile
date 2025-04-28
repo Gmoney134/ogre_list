@@ -35,4 +35,4 @@ EXPOSE 3000
 # Start the application
 # If using standalone output (output: 'standalone' in next.config.js), use "node server.js"
 # Otherwise, you might use "npm start" which typically runs "next start"
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

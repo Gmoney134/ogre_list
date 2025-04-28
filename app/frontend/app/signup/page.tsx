@@ -19,15 +19,15 @@ export default function SignUp() {
     setSuccess(""); // Clear previous success messages
 
     // Read the API URL from the environment variable
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
     console.log("Attempting sign up with API URL:", apiUrl); // Debugging
 
     // Check if apiUrl is defined before using it
-    if (!apiUrl) {
-      console.error("API URL is not defined. Check build configuration.");
-      setError("Configuration error: Cannot connect to the server.");
-      return; // Stop execution if URL is missing
-    }
+    //if (!apiUrl) {
+     // console.error("API URL is not defined. Check build configuration.");
+    //  setError("Configuration error: Cannot connect to the server.");
+     // return; // Stop execution if URL is missing
+    //}
 
     try {
       // Use the apiUrl variable here

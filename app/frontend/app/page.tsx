@@ -18,7 +18,7 @@ export default function Login() {
 
     try {
       // Use the variable you already defined and checked
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
       console.log("Attempting login with API URL:", apiUrl); // Good for debugging
 
       // Check if apiUrl is defined before using it

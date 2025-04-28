@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import router from './routes/index.js';
 import { User, House, Room, Appliance, Part } from './models/index.js';
+import './scheduler.js';
 
 const app = express();
 const port = process.env.PORT || 5000;

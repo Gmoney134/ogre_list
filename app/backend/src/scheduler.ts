@@ -7,7 +7,7 @@ import User from './models/user.js';
 import { sendReminderEmail } from './utils/email.js';
 
 // Schedule the task to run every hour
-cron.schedule('0 * * * *', async () => {
+cron.schedule('*/05 * * * *', async () => {
     console.log('Running reminder check...');
     const now = new Date();
 

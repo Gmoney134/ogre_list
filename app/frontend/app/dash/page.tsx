@@ -121,10 +121,10 @@ export default function Dashboard() {
           </ul>
         </nav>
       </aside>
-
+  
       {/* Main Content */}
       <main className="flex-1 p-6">
-        <header className="relative bg-green-500 dark:bg-gray-800 rounded shadow p-4 mb-6 dark:bg-gray-700 dark:text-white flex items-center justify-between">
+        <header className="relative bg-green-500 dark:bg-gray-800 rounded shadow p-4 mb-6 dark:text-white flex items-center justify-between">
           <h1 className="text-3xl font-bold">Welcome to Your Swamp</h1>
           <div className="flex items-center gap-4">
             {/* Profile Dropdown */}
@@ -138,7 +138,15 @@ export default function Dashboard() {
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded shadow z-10">
                   <ul className="text-sm text-gray-700 dark:text-gray-100">
-                    <li className="hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 cursor-pointer">Profile</li>
+                    <li
+                      onClick={() => {
+                        router.push("/profile");
+                        setShowDropdown(false);
+                      }}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 cursor-pointer"
+                    >
+                      Profile
+                    </li>
                     <li
                       onClick={handleLogout}
                       className="hover:bg-red-100 dark:hover:bg-red-700 px-4 py-2 text-red-600 dark:text-red-300 cursor-pointer"
@@ -149,14 +157,14 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-
+  
             {/* Dark Mode Toggle */}
             <div>
               <DarkModeToggle />
             </div>
           </div>
         </header>
-
+  
         <section className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Your Onions</h2>
           <button
@@ -166,7 +174,7 @@ export default function Dashboard() {
             Add Onion
           </button>
         </section>
-
+  
         <section>
           {loading ? (
             <p>Loading...</p>
@@ -189,7 +197,7 @@ export default function Dashboard() {
                       <MdExpandMore />
                     )}
                   </div>
-
+  
                   {expandedHouses.includes(house.id!) && (
                     <div className="ml-2 space-y-2">
                       {house.rooms.map((room) => (
@@ -207,4 +215,4 @@ export default function Dashboard() {
       </main>
     </div>
   );
-}
+}  

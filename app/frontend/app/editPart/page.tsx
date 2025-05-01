@@ -54,9 +54,9 @@ export default function CreatePart() {
       setError("You must be logged in to create a part.");
       return;
     }
-
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
     try {
-      const response = await fetch("http://localhost:5000/api/part", {
+      const response = await fetch(`${apiUrl}/part`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -86,7 +86,7 @@ export default function CreatePart() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 sm:p-20 bg-green-900 dark:bg-gray-800">
       <div className="bg-green-600 dark:bg-gray-900 shadow-lg rounded-2x1 p-8 w-full max-w-md">
-        <h2 className="text-center text-2xl font-semibold mb-6">Create a New Part</h2>
+        <h2 className="text-center text-2xl font-semibold mb-6">Edit this Part</h2>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
             type="text"

@@ -57,9 +57,10 @@ export default function CreateRoom() {
       setError("You must be logged in to create a room.");
       return;
     }
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
 
     try {
-      const response = await fetch("http://localhost:5000/api/room", {
+      const response = await fetch(`${apiUrl}/room`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

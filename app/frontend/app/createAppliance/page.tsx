@@ -57,9 +57,9 @@ export default function CreateAppliance() {
       setError("You must be logged in to create an appliance.");
       return;
     }
-
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
     try {
-      const response = await fetch("http://localhost:5000/api/appliance", {
+      const response = await fetch(`${apiUrl}/appliance`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -46,9 +46,9 @@ export default function EditHouse() {
       setError("You must be logged in to edit a house.");
       return;
     }
-
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
     try {
-      const response = await fetch(`http://localhost:5000/api/house/${houseData.id}`, {
+      const response = await fetch(`${apiUrl}/house/${houseData.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -81,9 +81,9 @@ export default function EditHouse() {
       setError("You must be logged in to delete a house.");
       return;
     }
-
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
     try {
-      const response = await fetch(`http://localhost:5000/api/house/${houseData.id}`, {
+      const response = await fetch(`${apiUrl}/house/${houseData.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaHome, FaTools, FaCog } from "react-icons/fa"; // Removed FaCouch, FaSignOutAlt as they weren't used after merge
+import { FaHome, FaTools, FaCog } from "react-icons/fa";
 import { MdExpandMore, MdExpandLess } from "react-icons/md";
 
 import DarkModeToggle from "@/components/DarkModeToggle";
@@ -58,9 +58,8 @@ export default function Dashboard() {
             const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
 
             try {
-                // Fetching houses likely happens at a specific endpoint, e.g., /houses or a dedicated /dashboard endpoint
-                // Adjust '/houses' if your backend endpoint is different
-                const response = await fetch(`${apiUrl}/houses`, { // Example endpoint, adjust as needed
+                // --- Corrected Fetch Path ---
+                const response = await fetch(`${apiUrl}/dashboard`, { // <-- Use /dashboard
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -68,22 +67,35 @@ export default function Dashboard() {
                     // Try to get more specific error from backend
                     let errorMsg = "Failed to fetch dashboard data";
                     try {
-                        const errorData = await response.json();
-                        errorMsg = errorData.message || errorMsg;
+                        // Check content type before parsing as JSON
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.includes("application/json")) {
+                            const errorData = await response.json();
+                            errorMsg = errorData.message || `Failed with status: ${response.status}`;
+                        } else {
+                            // If not JSON, use status text or a generic message
+                            errorMsg = `Failed with status: ${response.status} ${response.statusText}`;
+                        }
                     } catch (parseError) {
-                        // Ignore if response body isn't JSON
+                        // If JSON parsing fails even after check, use status
+                        errorMsg = `Failed with status: ${response.status} ${response.statusText}`;
                     }
                     throw new Error(errorMsg);
                 }
 
-                // Assuming the API returns an object like { houses: House[] }
-                // Adjust based on your actual API response structure
+                // --- Corrected Data Handling ---
+                // Backend returns { houses: [...] }, so access the 'houses' property
                 const data = await response.json();
-                setHouses(data || []); // Assuming the endpoint directly returns the array of houses
+                setHouses(data.houses || []); // <-- Access data.houses
 
             } catch (error: any) {
                 console.error("Error fetching dashboard data:", error);
                 setError(error.message || "An unexpected error occurred.");
+                // Handle specific auth errors if needed
+                if (error.message?.includes("Authentication failed") || error.message?.includes("Unauthorized")) {
+                    // Optionally redirect to login after a delay
+                    setTimeout(() => router.push("/"), 3000);
+                }
             } finally {
                 setLoading(false);
             }
@@ -101,12 +113,16 @@ export default function Dashboard() {
     };
 
     const handleHouseClick = (house: House): void => {
-        // Consider if storing the whole house object in sessionStorage is necessary/secure
-        // Often, just navigating with the ID is sufficient: router.push(`/onion/${house.id}`);
+        // Ensure house and house.id exist
         if (house?.id) {
-            // Storing potentially large objects in sessionStorage is discouraged
-            // sessionStorage.setItem("house", JSON.stringify(house));
-            router.push(`/onion/${house.id}`); // Navigate using ID
+            // 1. Store the clicked house data in sessionStorage
+            sessionStorage.setItem('house', JSON.stringify(house));
+            // 2. Navigate to the onion detail page
+            router.push(`/onion`);
+        } else {
+            console.error("Cannot navigate: House data or ID is missing.", house);
+            // Optionally set an error state to inform the user
+            // setError("Could not load details for the selected house.");
         }
     };
 
@@ -123,7 +139,7 @@ export default function Dashboard() {
     // --- Render ---
     return (
         <div className="relative min-h-screen text-gray-900 dark:text-gray-100">
-            {/* Background Image (from frontendV5 branch) */}
+            {/* Background Image */}
             <img
                 src="/images/swamp.jpg" // Ensure this path is correct in your public folder
                 alt="" // Decorative image, empty alt is acceptable
@@ -146,18 +162,9 @@ export default function Dashboard() {
                                     <FaHome /> Home
                                 </Link>
                             </li>
-                            {/* Removed Projects/Settings links for brevity, add back if needed */}
-                            {/* <li> ... FaTools Projects ... </li> */}
-                            {/* <li> ... FaCog Settings ... </li> */}
+                            {/* Add other sidebar links if needed */}
                         </ul>
                     </nav>
-                    {/* Optional: Add logout directly to sidebar */}
-                    {/* <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 py-2 px-4 mt-auto text-red-300 hover:bg-red-700 rounded transition-colors"
-                    >
-                        <FaSignOutAlt /> Logout
-                    </button> */}
                 </aside>
 
                 {/* Main Content */}
@@ -233,7 +240,6 @@ export default function Dashboard() {
                                         <div
                                             className="flex justify-between items-center mb-2 cursor-pointer"
                                             onClick={() => toggleExpandHouse(house.id)}
-                                            // Double click can be tricky for accessibility, consider a dedicated button
                                             onDoubleClick={() => handleHouseClick(house)}
                                             title="Click to expand, double-click to view details" // Tooltip for usability
                                         >
@@ -253,19 +259,18 @@ export default function Dashboard() {
                                                 {house.rooms.length > 0 ? (
                                                     house.rooms.map((room) => (
                                                         <div key={room.id}>
-                                                            {/* Consider making room name clickable to navigate */}
                                                             <p className="font-semibold text-gray-700 dark:text-gray-300">
                                                                 <span className="mr-1" aria-hidden="true">🛏</span> {/* Emoji for visual cue */}
                                                                 {room.name}
                                                             </p>
-                                                            {/* You could list appliances here too if needed */}
+                                                            {/* You could list appliances/parts here if needed */}
                                                         </div>
                                                     ))
                                                 ) : (
                                                     <p className="text-sm text-gray-500 dark:text-gray-400">No rooms added yet.</p>
                                                 )}
                                                 {/* Add View Details Button */}
-                                                 <button
+                                                <button
                                                     onClick={() => handleHouseClick(house)}
                                                     className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                                                 >

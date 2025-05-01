@@ -10,7 +10,7 @@ import partRouter from './part.js';
 const router = express.Router();
 
 router.use('/auth', authRouter);
-router.use('/profile', profileRouter);
+router.use(profileRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/house', houseRouter);
 router.use('/room', roomRouter);

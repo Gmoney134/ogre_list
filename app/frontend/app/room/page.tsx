@@ -94,6 +94,13 @@ export default function RoomDetails() {
     }
   };
 
+  const handleEditRoomClick = (): void => {
+    if (room) {
+      sessionStorage.setItem("room", JSON.stringify(room));
+      router.push("/editRoom");
+    }
+  };
+
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -144,12 +151,20 @@ export default function RoomDetails() {
         </header>
         <section className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Appliances</h2>
-          <button
-            onClick={handleCreateApplianceClick}
-            className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
-          >
-            Add Appliance
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={handleCreateApplianceClick}
+              className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
+            >
+              Add Appliance
+            </button>
+            <button
+              onClick={handleEditRoomClick}
+              className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 transition"
+            >
+              Edit Room
+            </button>
+          </div>
         </section>
 
         <section>

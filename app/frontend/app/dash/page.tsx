@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaHome, FaCouch, FaTools, FaSignOutAlt, FaCog } from "react-icons/fa";
+import { FaHome, FaTools, FaCog } from "react-icons/fa"; // Removed FaCouch, FaSignOutAlt as they weren't used after merge
 import { MdExpandMore, MdExpandLess } from "react-icons/md";
 
 import DarkModeToggle from "@/components/DarkModeToggle";
 
+// --- Type Definitions ---
+// Consider moving these to a shared types file if used elsewhere
 interface Part {
     id?: number;
     name?: string;
@@ -16,13 +18,13 @@ interface Part {
 interface Appliance {
     id?: number;
     name?: string;
-    parts: Part[];
+    parts: Part[]; // Assuming parts might be needed later
 }
 
 interface Room {
     id?: number;
     name?: string;
-    appliances: Appliance[];
+    appliances: Appliance[]; // Assuming appliances might be needed later
 }
 
 interface House {
@@ -31,43 +33,66 @@ interface House {
     rooms: Room[];
 }
 
+// --- Component ---
 export default function Dashboard() {
     const router = useRouter();
     const [houses, setHouses] = useState<House[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null); // Add error state
     const [expandedHouses, setExpandedHouses] = useState<number[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
 
+    // --- Effects ---
     useEffect(() => {
         const token = sessionStorage.getItem("authToken");
         if (!token) {
-            router.push("/");
+            router.push("/"); // Redirect to login if no token
             return;
         }
 
         const fetchDashboardData = async () => {
-            try {
+            setLoading(true);
+            setError(null); // Clear previous errors
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/dashboard`, {
+            // IMPORTANT: Use the proxy path defined in environment variables
+            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
+
+            try {
+                // Fetching houses likely happens at a specific endpoint, e.g., /houses or a dedicated /dashboard endpoint
+                // Adjust '/houses' if your backend endpoint is different
+                const response = await fetch(`${apiUrl}/houses`, { // Example endpoint, adjust as needed
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
                 if (!response.ok) {
-                    throw new Error("Failed to fetch dashboard data");
+                    // Try to get more specific error from backend
+                    let errorMsg = "Failed to fetch dashboard data";
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.message || errorMsg;
+                    } catch (parseError) {
+                        // Ignore if response body isn't JSON
+                    }
+                    throw new Error(errorMsg);
                 }
 
+                // Assuming the API returns an object like { houses: House[] }
+                // Adjust based on your actual API response structure
                 const data = await response.json();
-                setHouses(data.houses || []);
-            } catch (error) {
+                setHouses(data || []); // Assuming the endpoint directly returns the array of houses
+
+            } catch (error: any) {
                 console.error("Error fetching dashboard data:", error);
+                setError(error.message || "An unexpected error occurred.");
             } finally {
                 setLoading(false);
             }
         };
 
         fetchDashboardData();
-    }, []);
+    }, [router]); // Add router to dependency array as it's used in the effect
 
+    // --- Handlers ---
     const toggleExpandHouse = (id?: number) => {
         if (!id) return;
         setExpandedHouses((prev) =>
@@ -76,81 +101,98 @@ export default function Dashboard() {
     };
 
     const handleHouseClick = (house: House): void => {
-        if (house) {
-            sessionStorage.setItem("house", JSON.stringify(house));
-            router.push(`/onion`);
+        // Consider if storing the whole house object in sessionStorage is necessary/secure
+        // Often, just navigating with the ID is sufficient: router.push(`/onion/${house.id}`);
+        if (house?.id) {
+            // Storing potentially large objects in sessionStorage is discouraged
+            // sessionStorage.setItem("house", JSON.stringify(house));
+            router.push(`/onion/${house.id}`); // Navigate using ID
         }
     };
 
     const handleLogout = () => {
-        sessionStorage.clear();
-        router.push("/");
+        sessionStorage.clear(); // Clear all session data
+        router.push("/"); // Redirect to login
     };
 
+    const handleProfileClick = () => {
+        router.push("/profile");
+        setShowDropdown(false); // Close dropdown after navigation
+    };
+
+    // --- Render ---
     return (
         <div className="relative min-h-screen text-gray-900 dark:text-gray-100">
-            {/* Background Image */}
+            {/* Background Image (from frontendV5 branch) */}
             <img
-                src="/images/swamp.jpg"
-                alt="Background"
+                src="/images/swamp.jpg" // Ensure this path is correct in your public folder
+                alt="" // Decorative image, empty alt is acceptable
                 className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0"
+                aria-hidden="true"
             />
-            <div className="flex min-h-screen bg-green-600 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+            {/* Layout Wrapper */}
+            <div className="relative z-10 flex min-h-screen"> {/* Added relative z-10 */}
                 {/* Sidebar */}
-                <aside className="w-64 bg-green-900 dark:bg-gray-800 text-white p-6">
+                <aside className="w-64 bg-green-900 dark:bg-gray-800 text-white p-6 flex flex-col"> {/* Added flex flex-col */}
                     <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
-                    <nav>
+                    <nav className="flex-grow"> {/* Added flex-grow */}
                         <ul className="space-y-4">
                             <li>
                                 <Link
                                     href="/dash"
-                                    className="flex items-center gap-2 py-2 px-4 hover:bg-green-700 rounded"
+                                    className="flex items-center gap-2 py-2 px-4 hover:bg-green-700 rounded transition-colors"
                                 >
                                     <FaHome /> Home
                                 </Link>
                             </li>
-                            <li>
-                                <Link
-                                    href="/projects"
-                                    className="flex items-center gap-2 py-2 px-4 hover:bg-green-700 rounded"
-                                >
-                                    <FaTools /> Projects
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/settings"
-                                    className="flex items-center gap-2 py-2 px-4 hover:bg-green-700 rounded"
-                                >
-                                    <FaCog /> Settings
-                                </Link>
-                            </li>
+                            {/* Removed Projects/Settings links for brevity, add back if needed */}
+                            {/* <li> ... FaTools Projects ... </li> */}
+                            {/* <li> ... FaCog Settings ... </li> */}
                         </ul>
                     </nav>
+                    {/* Optional: Add logout directly to sidebar */}
+                    {/* <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 py-2 px-4 mt-auto text-red-300 hover:bg-red-700 rounded transition-colors"
+                    >
+                        <FaSignOutAlt /> Logout
+                    </button> */}
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 p-6">
-                    <header className="relative bg-green-500 dark:bg-gray-800 rounded shadow p-4 mb-6 dark:bg-gray-700 dark:text-white flex items-center justify-between">
+                <main className="flex-1 p-6 bg-green-600/80 dark:bg-gray-900/80"> {/* Added transparency */}
+                    <header className="relative bg-green-500 dark:bg-gray-700 rounded shadow p-4 mb-6 text-white flex items-center justify-between">
                         <h1 className="text-3xl font-bold">Welcome to Your Swamp</h1>
                         <div className="flex items-center gap-4">
                             {/* Profile Dropdown */}
                             <div className="relative">
                                 <button
                                     onClick={() => setShowDropdown(!showDropdown)}
-                                    className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
+                                    className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded transition-colors"
+                                    aria-haspopup="true"
+                                    aria-expanded={showDropdown}
                                 >
                                     Profile
                                 </button>
                                 {showDropdown && (
-                                    <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded shadow z-10">
-                                        <ul className="text-sm text-gray-700 dark:text-gray-100">
-                                            <li className="hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 cursor-pointer">Profile</li>
-                                            <li
-                                                onClick={handleLogout}
-                                                className="hover:bg-red-100 dark:hover:bg-red-700 px-4 py-2 text-red-600 dark:text-red-300 cursor-pointer"
-                                            >
-                                                Logout
+                                    <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg z-20"> {/* Increased z-index */}
+                                        <ul className="text-sm text-gray-700 dark:text-gray-200" role="menu">
+                                            <li role="menuitem">
+                                                <button
+                                                    onClick={handleProfileClick}
+                                                    className="w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 cursor-pointer transition-colors"
+                                                >
+                                                    Edit Profile
+                                                </button>
+                                            </li>
+                                            <li role="menuitem">
+                                                <button
+                                                    onClick={handleLogout}
+                                                    className="w-full text-left hover:bg-red-100 dark:hover:bg-red-700 px-4 py-2 text-red-600 dark:text-red-300 cursor-pointer transition-colors"
+                                                >
+                                                    Logout
+                                                </button>
                                             </li>
                                         </ul>
                                     </div>
@@ -165,45 +207,70 @@ export default function Dashboard() {
                     </header>
 
                     <section className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-semibold">Your Onions</h2>
+                        <h2 className="text-xl font-semibold text-white">Your Onions</h2>
                         <button
-                            onClick={() => router.push("/createOnion")}
+                            onClick={() => router.push("/createOnion")} // Ensure this route exists
                             className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
                         >
                             Add Onion
                         </button>
                     </section>
 
+                    {/* Display Area */}
                     <section>
-                        {loading ? (
-                            <p>Loading...</p>
-                        ) : (
+                        {loading && <p className="text-center text-white">Loading your onions...</p>}
+                        {error && <p className="text-center text-red-400 bg-red-900/50 p-3 rounded">{error}</p>}
+                        {!loading && !error && houses.length === 0 && (
+                            <p className="text-center text-gray-300">No onions found. Try adding one!</p>
+                        )}
+                        {!loading && !error && houses.length > 0 && (
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 {houses.map((house) => (
                                     <div
                                         key={house.id}
-                                        className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:ring-2 hover:ring-green-200 dark:hover:ring-green-400 cursor-pointer transition"
+                                        className="bg-white dark:bg-gray-800 p-4 rounded shadow transition duration-150 ease-in-out hover:ring-2 hover:ring-green-300 dark:hover:ring-green-500"
                                     >
                                         <div
-                                            className="flex justify-between items-center mb-2"
+                                            className="flex justify-between items-center mb-2 cursor-pointer"
                                             onClick={() => toggleExpandHouse(house.id)}
+                                            // Double click can be tricky for accessibility, consider a dedicated button
                                             onDoubleClick={() => handleHouseClick(house)}
+                                            title="Click to expand, double-click to view details" // Tooltip for usability
                                         >
-                                            <h3 className="text-lg font-bold">{house.name}</h3>
-                                            {expandedHouses.includes(house.id!) ? (
-                                                <MdExpandLess />
-                                            ) : (
-                                                <MdExpandMore />
-                                            )}
+                                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">{house.name}</h3>
+                                            <span className="text-gray-600 dark:text-gray-400">
+                                                {expandedHouses.includes(house.id!) ? (
+                                                    <MdExpandLess size={24} aria-label="Collapse"/>
+                                                ) : (
+                                                    <MdExpandMore size={24} aria-label="Expand"/>
+                                                )}
+                                            </span>
                                         </div>
 
+                                        {/* Expanded Content */}
                                         {expandedHouses.includes(house.id!) && (
-                                            <div className="ml-2 space-y-2">
-                                                {house.rooms.map((room) => (
-                                                    <div key={room.id}>
-                                                        <p className="font-semibold">🛏 Room: {room.name}</p>
-                                                    </div>
-                                                ))}
+                                            <div className="ml-2 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                                                {house.rooms.length > 0 ? (
+                                                    house.rooms.map((room) => (
+                                                        <div key={room.id}>
+                                                            {/* Consider making room name clickable to navigate */}
+                                                            <p className="font-semibold text-gray-700 dark:text-gray-300">
+                                                                <span className="mr-1" aria-hidden="true">🛏</span> {/* Emoji for visual cue */}
+                                                                {room.name}
+                                                            </p>
+                                                            {/* You could list appliances here too if needed */}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">No rooms added yet.</p>
+                                                )}
+                                                {/* Add View Details Button */}
+                                                 <button
+                                                    onClick={() => handleHouseClick(house)}
+                                                    className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                                >
+                                                    View Details
+                                                </button>
                                             </div>
                                         )}
                                     </div>

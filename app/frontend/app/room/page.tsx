@@ -6,12 +6,6 @@ import Link from "next/link";
 import { FaHome, FaTools, FaCog } from "react-icons/fa";
 import { MdExpandMore, MdExpandLess } from "react-icons/md";
 
-interface House {
-  id?: number;
-  name?: string;
-  rooms: Room[];
-}
-
 interface Room {
   id?: number;
   name?: string;
@@ -29,25 +23,26 @@ interface Part {
   name?: string;
 }
 
-export default function HouseDetails() {
+export default function RoomDetails() {
   const router = useRouter();
-  const [house, setHouse] = useState<House | null>(null);
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const [room, setRoom] = useState<Room | null>(null);
+  const [appliances, setAppliances] = useState<Appliance[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedRooms, setExpandedRooms] = useState<number[]>([]);
+  const [expandedAppliances, setExpandedAppliances] = useState<number[]>([]);
 
   useEffect(() => {
-    const houseData = sessionStorage.getItem("house");
-    if (houseData) {
-      const parsedHouse = JSON.parse(houseData);
-      setHouse(parsedHouse);
+    // Safely access sessionStorage on the client side
+    const roomData = sessionStorage.getItem("room");
+    if (roomData) {
+      const parsedRoom = JSON.parse(roomData);
+      setRoom(parsedRoom);
     } else {
-      router.push("/dash");
+      router.push("/dash"); // Redirect to dashboard if no house data is found
     }
   }, [router]);
 
   useEffect(() => {
-    if (!house || !house.id) return;
+    if (!room || !room.id) return;
 
     const token = sessionStorage.getItem("authToken");
     if (!token) {
@@ -55,54 +50,54 @@ export default function HouseDetails() {
       return;
     }
 
-    const fetchRoomData = async () => {
+    const fetchApplianceData = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/room/${house.id}`, {
+        const response = await fetch(`http://localhost:5000/api/appliance/${room.id}`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch house data");
+          throw new Error("Failed to fetch appliance data");
         }
 
         const data = await response.json();
-        setRooms(data || []);
+        setAppliances(data || []);
       } catch (error) {
-        console.error("Error fetching house data:", error);
+        console.error("Error fetching appliance data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRoomData();
-  }, [house, router]);
+    fetchApplianceData();
+  }, [room, router]);
 
-  const toggleExpandRoom = (id?: number) => {
+  const toggleExpandAppliance = (id?: number) => {
     if (!id) return;
-    setExpandedRooms((prev) =>
+    setExpandedAppliances((prev) =>
       prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id]
     );
   };
 
-  const handleRoomClick = (room: Room): void => {
+  const handleApplianceClick = (appliance: Appliance): void => {
+    if (appliance) {
+      sessionStorage.setItem("appliance", JSON.stringify(appliance));
+      router.push(`/appliance`);
+    }
+  };
+
+  const handleCreateApplianceClick = (): void => {
+    if (room && room.id) {
+      sessionStorage.setItem("roomID", room.id.toString());
+      router.push("/createAppliance");
+    }
+  };
+
+  const handleEditRoomClick = (): void => {
     if (room) {
       sessionStorage.setItem("room", JSON.stringify(room));
-      router.push(`/room`);
-    }
-  };
-
-  const handleCreateRoomClick = (): void => {
-    if (house && house.id) {
-      sessionStorage.setItem("houseID", house.id.toString());
-      router.push("/createRoom");
-    }
-  };
-
-  const handleEditHouseClick = (): void => {
-    if (house) {
-      sessionStorage.setItem("house", JSON.stringify(house));
-      router.push("/editOnion");
+      router.push("/editRoom");
     }
   };
 
@@ -110,8 +105,8 @@ export default function HouseDetails() {
     return <p>Loading...</p>;
   }
 
-  if (!house) {
-    return <p>House not found. Redirecting...</p>;
+  if (!room) {
+    return <p>Room not found. Redirecting...</p>;
   }
 
   return (
@@ -152,22 +147,22 @@ export default function HouseDetails() {
       {/* Main Content */}
       <main className="flex-1 p-6">
         <header className="relative bg-green-500 dark:bg-gray-800 rounded shadow p-4 mb-6 dark:bg-gray-700 dark:text-white flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Onion Name: {house.name}</h1>
+          <h1 className="text-3xl font-bold">Room Name: {room.name}</h1>
         </header>
         <section className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Rooms</h2>
+          <h2 className="text-xl font-semibold">Appliances</h2>
           <div className="flex gap-4">
             <button
-              onClick={handleCreateRoomClick}
+              onClick={handleCreateApplianceClick}
               className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
             >
-              Add Room
+              Add Appliance
             </button>
             <button
-              onClick={handleEditHouseClick}
+              onClick={handleEditRoomClick}
               className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 transition"
             >
-              Edit House
+              Edit Room
             </button>
           </div>
         </section>
@@ -177,29 +172,29 @@ export default function HouseDetails() {
             <p>Loading...</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {rooms.map((room) => (
+              {appliances.map((appliance) => (
                 <div
-                  key={room.id}
+                  key={appliance.id}
                   className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:ring-2 hover:ring-green-200 dark:hover:ring-green-400 cursor-pointer transition"
                 >
                   <div
                     className="flex justify-between items-center mb-2"
-                    onClick={() => toggleExpandRoom(room.id)}
-                    onDoubleClick={() => handleRoomClick(room)}
+                    onClick={() => toggleExpandAppliance(appliance.id)}
+                    onDoubleClick={() => handleApplianceClick(appliance)}
                   >
-                    <h3 className="text-lg font-bold">{room.name}</h3>
-                    {expandedRooms.includes(room.id!) ? (
+                    <h3 className="text-lg font-bold">{appliance.name}</h3>
+                    {expandedAppliances.includes(appliance.id!) ? (
                       <MdExpandLess />
                     ) : (
                       <MdExpandMore />
                     )}
                   </div>
 
-                  {expandedRooms.includes(room.id!) && (
+                  {expandedAppliances.includes(appliance.id!) && (
                     <div className="ml-2 space-y-2">
-                      {(room.appliances || []).map((appliance) => (
-                        <div key={appliance.id}>
-                          <p className="font-semibold">🛏 Appliance: {appliance.name}</p>
+                      {(appliance.parts || []).map((part) => (
+                        <div key={part.id}>
+                          <p className="font-semibold">🛏 Part: {part.name}</p>
                         </div>
                       ))}
                     </div>

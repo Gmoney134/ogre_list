@@ -2,48 +2,56 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react"; // Added useCallback
 import Link from "next/link";
-// Added FaArrowLeft, FaEdit
 import { FaHome, FaTools, FaCog, FaArrowLeft, FaEdit } from "react-icons/fa";
 import { MdExpandMore, MdExpandLess } from "react-icons/md";
 
-// Expanded Room interface
+// --- Interfaces ---
 interface Room {
   id?: number;
   name?: string;
-  houseId?: number; // Keep for context if needed
+  houseId?: number;
   description?: string;
-  squareFootage?: number | string; // Allow string for input, but number is better if possible
+  squareFootage?: number | string;
   reminderDate?: string | null;
   websiteLink?: string | null;
-  // appliances array is fetched separately
 }
 
-// Appliance interface for the list
+// Appliance interface for the main list (simple)
 interface Appliance {
   id?: number;
   name?: string;
-  // parts array is not needed for this view level
 }
 
-// Renamed component
+// Part interface for the expanded view
+interface Part {
+  id?: number;
+  name?: string;
+}
+
+// --- Component ---
 export default function RoomDetails() {
   const router = useRouter();
   const [room, setRoom] = useState<Room | null>(null);
   const [appliances, setAppliances] = useState<Appliance[]>([]);
-  const [loadingRoom, setLoadingRoom] = useState(true); // Separate loading states
+  const [loadingRoom, setLoadingRoom] = useState(true);
   const [loadingAppliances, setLoadingAppliances] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); // General page/appliance list error
   const [expandedAppliances, setExpandedAppliances] = useState<number[]>([]);
 
+  // State for parts within expanded appliances
+  const [expandedPartsData, setExpandedPartsData] = useState<Record<number, Part[]>>({});
+  const [expandedPartsLoading, setExpandedPartsLoading] = useState<Record<number, boolean>>({});
+  const [expandedPartsError, setExpandedPartsError] = useState<Record<number, string | null>>({});
+
+  // --- Effects ---
+  // Effect to load room details
   useEffect(() => {
-    // Safely access sessionStorage on the client side
     const roomDataString = sessionStorage.getItem("room");
     if (roomDataString) {
       try {
         const parsedRoom = JSON.parse(roomDataString);
-        // Basic validation
         if (parsedRoom && parsedRoom.id && parsedRoom.name) {
           setRoom(parsedRoom);
         } else {
@@ -52,21 +60,17 @@ export default function RoomDetails() {
       } catch (e) {
         console.error("Failed to parse room data:", e);
         setError("Could not load room details. Invalid data.");
-        // Optional: Redirect
       } finally {
         setLoadingRoom(false);
       }
     } else {
       setError("No room selected. Please go back and select a room.");
       setLoadingRoom(false);
-      // Optional: Redirect
-      // router.push("/dash");
     }
-  }, [router]); // Removed room from dependency array here
+  }, [router]);
 
-  // Fetch appliances associated with the room
+  // Effect to fetch appliances for the room
   useEffect(() => {
-    // Only fetch if we have a valid room ID
     if (!room?.id) {
       if (!loadingRoom) setLoadingAppliances(false);
       return;
@@ -76,65 +80,107 @@ export default function RoomDetails() {
     if (!token) {
       setError("Authentication required.");
       setLoadingAppliances(false);
-      // router.push("/"); // Optional: redirect to login
       return;
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
     const fetchApplianceData = async () => {
-      setLoadingAppliances(true); // Start loading appliances
+      setLoadingAppliances(true);
       try {
-        // Use the correct backend route for getting appliances by room ID
         const response = await fetch(`${apiUrl}/appliance/${room.id}`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
-
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.message || `Failed to fetch appliances (Status: ${response.status})`);
         }
-
         const data = await response.json();
         setAppliances(data || []);
-        setError(null); // Clear previous errors on success
+        // Clear general error if appliance fetch succeeds after a room load error
+        setError(prevError => (prevError?.includes("room details") ? null : prevError));
       } catch (err: any) {
         console.error("Error fetching appliance data:", err);
         setError(err.message || "An unknown error occurred while fetching appliances.");
-        setAppliances([]); // Clear appliances on error
+        setAppliances([]);
       } finally {
-        setLoadingAppliances(false); // Finish loading appliances
+        setLoadingAppliances(false);
       }
     };
-
     fetchApplianceData();
-    // Depend on room.id to refetch if the room changes
-  }, [room?.id, loadingRoom, router]);
+  }, [room?.id, loadingRoom, router]); // Keep dependencies
 
   // --- Handlers ---
 
+  // Function to fetch parts for a specific appliance (used on expand)
+  const fetchPartsForAppliance = useCallback(async (applianceId: number) => {
+    const token = sessionStorage.getItem("authToken");
+    if (!token) {
+      setExpandedPartsError(prev => ({ ...prev, [applianceId]: "Authentication required." }));
+      return;
+    }
+
+    // Set loading state for this specific appliance's parts
+    setExpandedPartsLoading(prev => ({ ...prev, [applianceId]: true }));
+    setExpandedPartsError(prev => ({ ...prev, [applianceId]: null })); // Clear previous error
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
+
+    try {
+      // Fetch parts using the /part/:applianceId endpoint
+      const response = await fetch(`${apiUrl}/part/${applianceId}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to fetch parts (Status: ${response.status})`);
+      }
+
+      const partsData = await response.json();
+      // Store the fetched parts
+      setExpandedPartsData(prev => ({ ...prev, [applianceId]: partsData || [] }));
+
+    } catch (err: any) {
+      console.error(`Error fetching parts for appliance ${applianceId}:`, err);
+      setExpandedPartsError(prev => ({ ...prev, [applianceId]: err.message || "Failed to load parts." }));
+      setExpandedPartsData(prev => ({ ...prev, [applianceId]: [] })); // Ensure empty array on error
+    } finally {
+      // Clear loading state for this specific appliance's parts
+      setExpandedPartsLoading(prev => ({ ...prev, [applianceId]: false }));
+    }
+  }, []); // Empty dependency array as it uses sessionStorage and env vars
+
+  // Toggle appliance expansion and fetch parts if needed
   const toggleExpandAppliance = (id?: number) => {
     if (!id) return;
-    setExpandedAppliances((prev) =>
-        prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id]
-    );
+    const isCurrentlyExpanded = expandedAppliances.includes(id);
+    const newExpandedState = isCurrentlyExpanded
+        ? expandedAppliances.filter((h) => h !== id)
+        : [...expandedAppliances, id];
+
+    setExpandedAppliances(newExpandedState);
+
+    // If expanding and parts haven't been loaded or errored previously for this session
+    if (!isCurrentlyExpanded && !expandedPartsData[id] && !expandedPartsError[id]) {
+      fetchPartsForAppliance(id);
+    }
   };
 
   // Navigate to the specific appliance's detail page
   const handleApplianceClick = (appliance: Appliance): void => {
     if (appliance?.id) {
-      // Store the full appliance data before navigating
-      // Note: Ensure the data fetched for the list includes all necessary fields
-      // or fetch the full details on the appliance page itself.
+      // Fetching full details might be better on the appliance page itself,
+      // but we pass what we have for now.
       sessionStorage.setItem("appliance", JSON.stringify(appliance));
-      router.push(`/appliance`); // Navigate to the appliance detail page
+      router.push(`/appliance`);
     } else {
       console.error("Cannot navigate: Appliance data or ID is missing.", appliance);
       setError("Could not load details for the selected appliance.");
     }
   };
 
-  // Navigate to the page for creating a new appliance in this room
   const handleCreateApplianceClick = (): void => {
     if (room?.id) {
       sessionStorage.setItem("roomID", room.id.toString());
@@ -144,10 +190,8 @@ export default function RoomDetails() {
     }
   };
 
-  // Navigate to the page for editing this room
   const handleEditRoomClick = (): void => {
     if (room) {
-      // Ensure the full room data is stored before navigating
       sessionStorage.setItem("room", JSON.stringify(room));
       router.push("/editRoom");
     } else {
@@ -155,13 +199,10 @@ export default function RoomDetails() {
     }
   };
 
-  // Navigate back to the parent onion (house) page
   const handleGoBackToOnion = (): void => {
-    // Assumes 'house' data is still in sessionStorage for onion/page.tsx
     router.push(`/onion`);
   };
 
-  // Helper to format date
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "Not set";
     try {
@@ -172,18 +213,16 @@ export default function RoomDetails() {
   };
 
   // --- Render Logic ---
-
   if (loadingRoom) {
     return <p className="p-6 text-center">Loading room details...</p>;
   }
 
+  // Prioritize room loading error
   if (error && !room) {
-    // Show error prominently if room couldn't load
     return <p className="p-6 text-center text-red-500">{error}</p>;
   }
 
   if (!room) {
-    // Fallback if room is null after loading
     return <p className="p-6 text-center">Room details not available.</p>;
   }
 
@@ -191,6 +230,7 @@ export default function RoomDetails() {
       <div className="flex min-h-screen bg-green-600 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         {/* Sidebar */}
         <aside className="w-64 bg-green-900 dark:bg-gray-800 text-white p-6 flex-shrink-0">
+          {/* ... Sidebar content ... */}
           <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
           <nav>
             <ul className="space-y-4">
@@ -202,97 +242,42 @@ export default function RoomDetails() {
                   <FaHome /> Home
                 </Link>
               </li>
-              {/* Remove or update Projects/Settings links if not used */}
-              {/* <li>
-                            <Link href="/projects" className="flex items-center gap-2 py-2 px-4 hover:bg-green-700 rounded">
-                                <FaTools /> Projects
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/settings" className="flex items-center gap-2 py-2 px-4 hover:bg-green-700 rounded">
-                                <FaCog /> Settings
-                            </Link>
-                        </li> */}
             </ul>
           </nav>
         </aside>
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
-          {/* Header with Back Button, Title, and Edit Button */}
+          {/* Header */}
           <header className="relative bg-green-500 dark:bg-gray-800 rounded shadow p-4 mb-6 dark:bg-gray-700 dark:text-white flex items-center justify-between">
-            {/* Back Button */}
-            <button
-                onClick={handleGoBackToOnion}
-                className="text-white px-3 py-2 rounded hover:bg-green-700 dark:hover:bg-gray-600 transition flex items-center gap-2 mr-4"
-                title="Back to Onion (House)"
-            >
-              <FaArrowLeft /> Back
-            </button>
-
-            {/* Room Name Title */}
-            <h1 className="text-3xl font-bold flex-grow text-center">
-              {room.name || "Room Details"}
-            </h1>
-
-            {/* Edit Room Button */}
-            <button
-                onClick={handleEditRoomClick}
-                className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 transition flex items-center gap-2 ml-4"
-                title="Edit this room"
-            >
-              <FaEdit /> Edit Room
-            </button>
+            {/* ... Header content ... */}
+            <button onClick={handleGoBackToOnion} className="text-white px-3 py-2 rounded hover:bg-green-700 dark:hover:bg-gray-600 transition flex items-center gap-2 mr-4" title="Back to Onion (House)"> <FaArrowLeft /> Back </button>
+            <h1 className="text-3xl font-bold flex-grow text-center"> {room.name || "Room Details"} </h1>
+            <button onClick={handleEditRoomClick} className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 transition flex items-center gap-2 ml-4" title="Edit this room"> <FaEdit /> Edit Room </button>
           </header>
 
           {/* Room Details Section */}
           <section className="bg-white dark:bg-gray-800 p-6 rounded shadow mb-6">
+            {/* ... Room details content ... */}
             <h2 className="text-xl font-semibold mb-4 border-b pb-2">Room Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="font-medium text-gray-600 dark:text-gray-400">Description:</p>
-                <p className="text-lg">{room.description || "N/A"}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600 dark:text-gray-400">Square Footage:</p>
-                <p className="text-lg">{room.squareFootage ? `${room.squareFootage} sq ft` : "N/A"}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600 dark:text-gray-400">Reminder Date:</p>
-                <p className="text-lg">{formatDate(room.reminderDate)}</p>
-              </div>
-              <div className="md:col-span-2">
-                <p className="font-medium text-gray-600 dark:text-gray-400">Website Link:</p>
-                {room.websiteLink ? (
-                    <a
-                        href={room.websiteLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-lg text-blue-600 dark:text-blue-400 hover:underline break-all"
-                    >
-                      {room.websiteLink}
-                    </a>
-                ) : (
-                    <p className="text-lg">Not set</p>
-                )}
-              </div>
+              <div> <p className="font-medium text-gray-600 dark:text-gray-400">Description:</p> <p className="text-lg">{room.description || "N/A"}</p> </div>
+              <div> <p className="font-medium text-gray-600 dark:text-gray-400">Square Footage:</p> <p className="text-lg">{room.squareFootage ? `${room.squareFootage} sq ft` : "N/A"}</p> </div>
+              <div> <p className="font-medium text-gray-600 dark:text-gray-400">Reminder Date:</p> <p className="text-lg">{formatDate(room.reminderDate)}</p> </div>
+              <div className="md:col-span-2"> <p className="font-medium text-gray-600 dark:text-gray-400">Website Link:</p> {room.websiteLink ? ( <a href={room.websiteLink} target="_blank" rel="noopener noreferrer" className="text-lg text-blue-600 dark:text-blue-400 hover:underline break-all"> {room.websiteLink} </a> ) : ( <p className="text-lg">Not set</p> )} </div>
             </div>
           </section>
 
           {/* Appliances Section Header */}
           <section className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Appliances</h2>
-            <button
-                onClick={handleCreateApplianceClick}
-                className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
-            >
-              Add Appliance
-            </button>
+            <button onClick={handleCreateApplianceClick} className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"> Add Appliance </button>
           </section>
 
-          {/* Display loading/error specifically for appliances */}
+          {/* Display loading/error for appliances list */}
           {loadingAppliances && <p className="text-center p-4">Loading appliances...</p>}
-          {error && !loadingAppliances && <p className="text-center p-4 text-red-500">{error}</p>}
+          {/* Display appliance fetch error *only if* room loading succeeded */}
+          {!loadingRoom && error && !appliances.length && <p className="text-center p-4 text-red-500">{error}</p>}
 
           {/* Appliances List */}
           {!loadingAppliances && appliances.length === 0 && !error && (
@@ -304,28 +289,60 @@ export default function RoomDetails() {
                     <div
                         key={appliance.id}
                         className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:ring-2 hover:ring-green-200 dark:hover:ring-green-400 cursor-pointer transition"
-                        onDoubleClick={() => handleApplianceClick(appliance)} // Navigate on double click
+                        onDoubleClick={() => handleApplianceClick(appliance)}
                     >
                       <div
                           className="flex justify-between items-center mb-2"
-                          onClick={() => toggleExpandAppliance(appliance.id)} // Optional: single click expand
+                          onClick={() => toggleExpandAppliance(appliance.id)} // Single click toggles expand
                       >
                         <h3 className="text-lg font-bold">{appliance.name}</h3>
-                        {/* Optional: expand icon */}
-                        {expandedAppliances.includes(appliance.id!) ? (
-                            <MdExpandLess />
-                        ) : (
-                            <MdExpandMore />
-                        )}
+                        <span className="text-gray-600 dark:text-gray-400">
+                                        {expandedAppliances.includes(appliance.id!) ? (
+                                            <MdExpandLess size={24} aria-label="Collapse"/>
+                                        ) : (
+                                            <MdExpandMore size={24} aria-label="Expand"/>
+                                        )}
+                                    </span>
                       </div>
 
-                      {/* Optional: Show minimal details on expand */}
+                      {/* --- NEW Expanded Content --- */}
                       {expandedAppliances.includes(appliance.id!) && (
-                          <div className="ml-2 mt-2 space-y-1 text-sm border-t pt-2">
-                            {/* You could potentially show # of parts here if fetched */}
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Double-click for full details</p>
+                          <div className="ml-2 mt-2 space-y-2 text-sm border-t border-gray-200 dark:border-gray-700 pt-2">
+                            {/* Loading state for parts */}
+                            {expandedPartsLoading[appliance.id!] && <p className="text-xs text-gray-500 dark:text-gray-400">Loading parts...</p>}
+
+                            {/* Error state for parts */}
+                            {expandedPartsError[appliance.id!] && <p className="text-xs text-red-500">{expandedPartsError[appliance.id!]}</p>}
+
+                            {/* Display parts list if loaded and no error */}
+                            {!expandedPartsLoading[appliance.id!] && !expandedPartsError[appliance.id!] && expandedPartsData[appliance.id!] && (
+                                expandedPartsData[appliance.id!].length > 0 ? (
+                                    <ul className="list-disc list-inside space-y-1">
+                                      {expandedPartsData[appliance.id!].map(part => (
+                                          <li key={part.id} className="text-gray-700 dark:text-gray-300">
+                                            {part.name}
+                                          </li>
+                                      ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">No parts found for this appliance.</p>
+                                )
+                            )}
+
+                            {/* View Details Button */}
+                            <button
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent card's onClick
+                                  handleApplianceClick(appliance);
+                                }}
+                                className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              View Full Details
+                            </button>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">(Or double-click card)</p>
                           </div>
                       )}
+                      {/* --- End of Expanded Content --- */}
                     </div>
                 ))}
               </div>

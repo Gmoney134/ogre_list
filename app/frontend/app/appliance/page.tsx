@@ -301,33 +301,63 @@ export default function ApplianceDetails() {
                     <div
                         key={part.id}
                         className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:ring-2 hover:ring-green-200 dark:hover:ring-green-400 cursor-pointer transition"
-                        // Removed onClick for toggle, keep onDoubleClick for navigation
                         onDoubleClick={() => handlePartClick(part)} // Navigate on double click
                     >
                       <div
                           className="flex justify-between items-center mb-2"
-                          // Add onClick here if you still want single-click expand/collapse
-                          onClick={() => toggleExpandPart(part.id)}
+                          onClick={() => toggleExpandPart(part.id)} // Single click toggles expand
                       >
                         <h3 className="text-lg font-bold">{part.name}</h3>
-                        {/* Keep expand icon if using single-click toggle */}
+                        {/* Expand/collapse icon */}
                         {expandedParts.includes(part.id!) ? (
-                            <MdExpandLess />
+                            <MdExpandLess size={24} aria-label="Collapse"/>
                         ) : (
-                            <MdExpandMore />
+                            <MdExpandMore size={24} aria-label="Expand"/>
                         )}
                       </div>
 
-                      {/* Optional: Show minimal details on expand */}
+                      {/* --- UPDATED Expanded Content --- */}
                       {expandedParts.includes(part.id!) && (
-                          <div className="ml-2 mt-2 space-y-1 text-sm border-t pt-2">
-                            <p><strong>Reminder:</strong> {formatDate(part.reminderDate)}</p>
-                            {part.websiteLink && (
-                                <p><strong>Link:</strong> <a href={part.websiteLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Visit</a></p>
+                          <div className="ml-2 mt-2 space-y-2 text-sm border-t border-gray-200 dark:border-gray-700 pt-2">
+                            {/* Display Reminder Date */}
+                            <p className="text-gray-700 dark:text-gray-300">
+                              <strong>Reminder:</strong> {formatDate(part.reminderDate)}
+                            </p>
+                            {/* Display Website Link */}
+                            {part.websiteLink ? (
+                                <p className="text-gray-700 dark:text-gray-300">
+                                  <strong>Link:</strong>{' '}
+                                  <a
+                                      href={part.websiteLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline break-all"
+                                      // Prevent click on link from toggling expand state again
+                                      onClick={(e) => e.stopPropagation()}
+                                  >
+                                    Visit Link
+                                  </a>
+                                </p>
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No website link.</p>
                             )}
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Double-click for full details</p>
+                            {/* Add other part details here if needed and available in the 'part' object */}
+                            {/* e.g., <p><strong>Some Detail:</strong> {part.someDetail || 'N/A'}</p> */}
+
+                            {/* Add View Details Button (like dash page) */}
+                            <button
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent card's onClick from firing
+                                  handlePartClick(part); // Use existing handler for navigation
+                                }}
+                                className="mt-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              View Full Details
+                            </button>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">(Or double-click card)</p>
                           </div>
                       )}
+                      {/* --- End of Updated Expanded Content --- */}
                     </div>
                 ))}
               </div>

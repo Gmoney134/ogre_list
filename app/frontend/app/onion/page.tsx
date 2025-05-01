@@ -100,14 +100,6 @@ export default function HouseDetails() {
     }
   };
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (!house) {
-    return <p>House not found. Redirecting...</p>;
-  }
-
   return (
     <div className="flex min-h-screen bg-green-600 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
